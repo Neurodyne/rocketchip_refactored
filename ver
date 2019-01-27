@@ -1,0 +1,9 @@
+This project uses 
+
+src/ 
+bootrom/ 
+
+from commit ( Jan 27 2019 )
+https://github.com/freechipsproject/rocket-chip : e86a4df663641d037902aab1a1189dd155cbd6f3 
+
+Other scripts were all refactored to get rid of old things
