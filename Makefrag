@@ -1,0 +1,64 @@
+
+MYNAME ?= $(shell whoami)
+BASE ?= $(shell pwd)
+
+resources := $(BASE)/src/main/resources
+csrc := $(resources)/csrc
+vsrc := $(resources)/vsrc
+
+# JVM SETUP
+JVM_MEMORY ?= 4G
+STACK_MEMORY ?= 8M
+
+# Take dependencies from a local repo
+
+JARS_HOME ?= /home/$(MYNAME)/.ivy2/local/edu.berkeley.cs
+CHISEL3 ?= $(JARS_HOME)/chisel3_2.12/3.2-SNAPSHOT/jars/chisel3_2.12.jar
+
+# NOTE: USE a FAT 17MB FIRRTL jar file, manually generated with `sbt assembly` in the FIRRTL folder and put it to the JARS_HOME folder
+FIRRTL ?= $(JARS_HOME)/firrtl_2.12/1.2-SNAPSHOT/jars/firrtl.jar
+
+# Local definitions
+
+PRJ ?= $(BASE)/target/scala-2.12/rocketchip_2.12-1.2.jar
+OUTDIR ?= $(BASE)/out
+SIMDIR ?= $(BASE)/sim
+TESTNAME ?= TestHarness
+
+PREFIX ?= freechips.rocketchip.system
+CONFIG ?= TinyConfig
+FULL_NAME ?= $(PREFIX).$(CONFIG)
+
+VLSI_MEM_GEN ?= $(BASE)/scripts/vlsi_mem_gen
+
+# Generator setup 
+
+FIRRTL_RUN ?= java -Xmx$(JVM_MEMORY) -Xss$(STACK_MEMORY) -cp $(FIRRTL):$(CHISEL3):$(PRJ) firrtl.Driver
+firrtl = $(OUTDIR)/$(FULL_NAME).fir
+verilog = \
+  $(OUTDIR)/$(FULL_NAME).v \
+  $(OUTDIR)/$(FULL_NAME).behav_srams.v 
+
+%.v %.conf: %.fir $(FIRRTL)
+	mkdir -p $(dir $@)
+	$(FIRRTL_RUN) $(patsubst %,-i %,$(filter %.fir,$^)) -o $*.v -X verilog --infer-rw $(TESTNAME) --repl-seq-mem -c:$(TESTNAME):-o:$*.conf -faf $*.anno.json -td $(OUTDIR)/$(FULL_NAME)/
+
+
+# Verilator setup
+
+VERI := verilator --cc --exe
+
+OPTS := -O1 --threads 2
+VERI_FLAGS := --top-module $(TESTNAME) $(OPTS) \
+  +define+PRINTF_COND=\$$c\(\"verbose\",\"\&\&\"\,\"done_reset\"\) \
+  +define+RANDOMIZE_GARBAGE_ASSIGN \
+  +define+STOP_COND=\$$c\(\"done_reset\"\) --assert \
+  --output-split 20000 \
+  --output-split-cfuncs 20000 \
+	-Wno-STMTDLY --x-assign unique \
+  -I$(vsrc) \
+  -CFLAGS "$(CXXFLAGS) -DVERILATOR -DTEST_HARNESS=V$(TESTNAME) -include $(csrc)/verilator.h -include $(OUTDIR)/$(FULL_NAME).plusArgs"
+
+cppfiles = $(addprefix $(csrc)/, $(addsuffix .cc, $(CXXSRCS)))
+headers = $(wildcard $(csrc)/*.h)
+
