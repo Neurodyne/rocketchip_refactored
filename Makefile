@@ -9,14 +9,15 @@ MYNAME ?= $(shell whoami)
 
 # Take dependencies from a local repo
 JARS_HOME ?= /home/$(MYNAME)/.ivy2/local/edu.berkeley.cs
-FIRRTL_JAR ?= $(JARS_HOME)/firrtl_2.12/1.2-SNAPSHOT/jars/firrtl_2.12.jar
 CHISEL3_JAR ?= $(JARS_HOME)/chisel3_2.12/3.2-SNAPSHOT/jars/chisel3_2.12.jar
+
+# NOTE: USE a FAT 17MB FIRRTL jar file, manually generated with `sbt assembly` in the FIRRTL folder and put it to the JARS_HOME folder
+FIRRTL_JAR ?= $(JARS_HOME)/firrtl_2.12/1.2-SNAPSHOT/jars/firrtl.jar
 
 # Local definitions
 BASE ?= $(shell pwd)
 PRJ_JAR ?= $(BASE)/target/scala-2.12/rocketchip_2.12-1.2.jar
 OUTDIR ?= $(BASE)/sim/generated-src
-LAUNCHER ?= $(BASE)/sbt-launch.jar
 TESTNAME ?= TestHarness
 
 FIRRTL ?= java -Xmx$(JVM_MEMORY) -Xss8M -cp $(FIRRTL_JAR):$(CHISEL3_JAR):$(PRJ_JAR) firrtl.Driver
@@ -26,7 +27,7 @@ CONFIG ?= TinyConfig
 
 FULL_NAME ?= $(PREFIX).$(CONFIG)
 
-VLSI_MEM_GEN ?= $(BASE_dir)/scripts/vlsi_mem_gen
+VLSI_MEM_GEN ?= $(BASE)/scripts/vlsi_mem_gen
 
 firrtl = $(OUTDIR)/$(FULL_NAME).fir
 verilog = \
