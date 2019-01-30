@@ -18,13 +18,24 @@ fir:
 # Generate verilog here
 vlog: $(verilog)
 
-vsim: $(verilog) $(cppfiles) $(headers)
-	mkdir -p $(SIMDIR)/$(FULL_NAME)
-	$(VERI) $(VERI_FLAGS) -Mdir $(SIMDIR)/$(FULL_NAME) \
-	-o $(abspath $(sim_dir))/$@ $(verilog) $(cppfiles) -LDFLAGS "$(LDFLAGS)" \
-	-CFLAGS "-I$(SIMDIR) -include V$(TESTNAME).h"
-	$(MAKE) VM_PARALLEL_BUILDS=1 -C $(SIMDIR)/$(FULL_NAME) -f V$(TESTNAME).mk
+SIMOUT = $(SIMDIR)/$(TESTNAME)
+DBGOUT = $(SIMOUT)_dbg
 
+vsim: $(verilog) $(cppfiles) $(headers)
+	mkdir -p $(SIMOUT)
+	$(VERI) $(VERI_FLAGS) -Mdir $(SIMOUT) \
+	-o $(abspath $(SIMDIR))/$@ $(verilog) $(cppfiles) -LDFLAGS "$(LDFLAGS)" \
+	-CFLAGS "-I$(SIMDIR) -include V$(TESTNAME).h"
+	$(MAKE) VM_PARALLEL_BUILDS=1 -C $(SIMOUT) -f V$(TESTNAME).mk
+
+vdbg: $(verilog) $(cppfiles) $(headers)
+	mkdir -p $(DBGOUT)
+	$(VERI) $(VERI_FLAGS) -Mdir $(DBGOUT) --trace  \
+	-o $(abspath $(SIMDIR))/$@ $(verilog) $(cppfiles) -LDFLAGS "$(LDFLAGS)" \
+	-CFLAGS "-I$(SIMDIR) -include V$(TESTNAME).h"
+	$(MAKE) VM_PARALLEL_BUILDS=1 -C $(DBGOUT) -f V$(TESTNAME).mk
+
+# Ram generator
 $(OUTDIR)/$(FULL_NAME).behav_srams.v : $(OUTDIR)/$(FULL_NAME).conf $(VLSI_MEM_GEN)
 	cd $(OUTDIR) && \
 	$(VLSI_MEM_GEN) $(OUTDIR)/$(FULL_NAME).conf > $@.tmp && \
