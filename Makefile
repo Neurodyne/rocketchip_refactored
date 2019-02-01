@@ -5,8 +5,10 @@ include Makefrag
 
 show:
 	@echo "**** Rocketchip build flow ****"
-	@echo "make fir - compile Chisel sources and generate FIRRTL output"
-	@echo "make vlog - compile FIRRTL and generate Verilog"
+	@echo "make lint - run lint tool"
+	@echo "make cov  - run coverage tool"
+	@echo "make fir  - generate FIRRTL output"
+	@echo "make vlog - generate Verilog"
 	@echo "make vsim - run Verilog simulation with Verilator"
 	@echo "make vdbg - run Verilog debug simulation with Verilator"
 
@@ -14,6 +16,14 @@ show:
 fir:
 	@echo "Compiling Chisel sources..."
 	@sbt 'runMain $(PREFIX).Generator $(OUTDIR) $(PREFIX) $(TESTNAME) $(PREFIX) $(CONFIG)'
+
+lint:
+	@echo "Running Source Linting. Output is in ./target/scala-2.12/scapegoat-report"
+	@sbt scapegoat
+
+cov:
+	@echo "Running Source Coverage. Output is in ./target/scala-2.12/scoverage-report"
+	@sbt coverage 'runMain $(PREFIX).Generator $(OUTDIR) $(PREFIX) $(TESTNAME) $(PREFIX) $(CONFIG)'
 
 # Generate verilog here
 vlog: $(verilog)

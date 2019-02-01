@@ -7,7 +7,6 @@ import sys.process._
 
 enablePlugins(PackPlugin)
 
-
 // Provide a managed dependency on X if -DXVersion="" is supplied on the command line.
 val defaultVersions = Map(
   "firrtl" -> "1.2-SNAPSHOT",
@@ -21,7 +20,7 @@ lazy val commonSettings = Seq(
   crossScalaVersions := Seq("2.12.8", "2.11.12"),
   parallelExecution in Global := false,
   traceLevel   := 15,
-  scalacOptions ++= Seq("-deprecation","-unchecked","-Xsource:2.11"),
+  scalacOptions ++= Seq("-deprecation","-unchecked","-Xsource:2.11", "-Xlint"),
   libraryDependencies ++= Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value),
   libraryDependencies ++= Seq("org.json4s" %% "json4s-jackson" % "3.6.1"),
   libraryDependencies ++= Seq("chisel3").map {
@@ -58,3 +57,8 @@ val chipSettings = Seq(
   }
 )
 
+
+// Lint
+scapegoatVersion in ThisBuild := "1.3.8"
+scalaBinaryVersion in ThisBuild := "2.12"
+//wartremoverWarnings ++= Warts.unsafe
